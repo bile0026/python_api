@@ -26,10 +26,12 @@ ucrm_headers = {
 unms_headers = {
     'X-Auth-Token': uisp_config["key"], 'Content-Type': 'application/json'}
 
+# gather data from USIP
 r_clients = requests.get(clients_url, headers=ucrm_headers)
 r_services = requests.get(services_url, headers=ucrm_headers)
 r_client_services = requests.get(client_services_url, headers=ucrm_headers)
 
+# format data into json
 r_clients = r_clients.json()
 r_services = r_services.json()
 r_client_services = r_client_services.json()
@@ -38,19 +40,12 @@ r_client_services = r_client_services.json()
 services = []
 
 for service in r_client_services:
-    # print("Service id: ", service.get('id', "No Service ID Found"))
-    # print("Service status: ", service.get('status', "No service status found"))
-    # print("Service client id: ", service.get(
-    #    'clientId', "No service Cliend ID Found"))
 
+    # find client in the client list
     client = next(
         (item for item in r_clients if item["id"] == service['clientId']), "Client does not exist")
-    # client = r_clients.get('service["clientId"]', "No Client id for service")
-    # try:
-    #     print(client['id'], client['firstName'], client['lastName'])
-    # except:
-    #     print("Client does not exist")
 
+    # build list of services and clients
     try:
         services.append({
             "serviceId": service.get('id'),
@@ -68,8 +63,3 @@ for service in r_client_services:
 
 for item in services:
     print(item)
-
-# for client in r:
-#     print(client['id'])
-#     print(client['firstName'], client['lastName'])
-#     print(client['hasSuspendedService'])

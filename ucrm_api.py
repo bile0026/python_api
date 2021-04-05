@@ -30,25 +30,6 @@ ucrm_headers = {
 unms_headers = {
     'X-Auth-Token': uisp_config["key"], 'Content-Type': 'application/json'}
 
-# gather data from UCRM
-# r_clients = requests.get(clients_url, headers=ucrm_headers)
-# r_services = requests.get(services_url, headers=ucrm_headers)
-# r_client_services = requests.get(client_services_url, headers=ucrm_headers)
-
-# gather data from UNMS
-# r_sites = (requests.get(sites_url, headers=unms_headers)).json()
-# r_devices = (requests.get(devices_url, headers=unms_headers)).json()
-
-# format data into json
-# r_clients = r_clients.json()
-# r_services = r_services.json()
-# r_client_services = r_client_services.json()
-# r_sites = r_sites.json()
-# r_devices = r_devices.json()
-# print(r.text)
-
-services = []
-
 
 def getClient(clientId):
     client = (requests.get(clients_url + '/' +
@@ -65,15 +46,11 @@ def getClientServicePlans():
 def getClientService(serviceId):
     clientService = (requests.get(clients_url + '/services/' +
                                   str(serviceId), headers=ucrm_headers)).json()
-    # client = next(
-    #     (item for item in r_clients if item["id"] == serviceId), None)
     return clientService
 
 
 def getAllDevices():
     device = (requests.get(devices_url, headers=unms_headers)).json()
-    # device = next(
-    #     (item for item in r_devices if item["identification"]["site"]["id"] == siteId), None)
     return device
 
 
@@ -87,15 +64,10 @@ def getSite(siteId):
     site = (requests.get(sites_url + '/' + siteId +
                          '?ucrmDetails=true', headers=unms_headers)).json()
     return site
-    # try:
-    #     site = next(
-    #         (item for item in r_sites if item["ucrm"]["client"]["id"] == str(clientId)), None)
-    # except:
-    #     return None
-    # else:
-    #     return site
 
 
+# variable declarations
+services = []
 clientServicePlans = getClientServicePlans()
 allDevices = getAllDevices()
 

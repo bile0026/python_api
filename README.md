@@ -14,4 +14,16 @@ router = <router_ip_or_fqdn>
 port = 8728
 username = <username>
 password = <password>
+# burst max in decimal format
+burstPercentUp = .05
+# burst max in decimal format
+burstPercentDown = .05
+# burst time in seconds
+burstTimeUp = 10
+# bust time in seconds
+burstTimeDown = 10
+# alow burst at percentage in decimal
+limitAtUp = .95
+# alow burst at percentage in decimal
+limitAtDown = 95
 ```

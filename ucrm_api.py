@@ -5,6 +5,7 @@ from configparser import ConfigParser
 config = ConfigParser()
 config.read("ucrm_api.ini")
 uisp_config = config['UISP']
+mikrotik_config = config['MIKROTIK']
 
 base_url = 'https://' + uisp_config['server_fqdn']
 
@@ -34,15 +35,39 @@ r_services = r_services.json()
 r_client_services = r_client_services.json()
 # print(r.text)
 
+services = []
+
 for service in r_client_services:
-    print("Service id: ", service['id'])
-    print("Service status: ", service['status'])
-    print("Service client id: ", service['clientId'])
+    # print("Service id: ", service.get('id', "No Service ID Found"))
+    # print("Service status: ", service.get('status', "No service status found"))
+    # print("Service client id: ", service.get(
+    #    'clientId', "No service Cliend ID Found"))
+
+    client = next(
+        (item for item in r_clients if item["id"] == service['clientId']), "Client does not exist")
+    # client = r_clients.get('service["clientId"]', "No Client id for service")
+    # try:
+    #     print(client['id'], client['firstName'], client['lastName'])
+    # except:
+    #     print("Client does not exist")
+
     try:
-        client = r_clients[service['clientId']]
-        print(client)
+        services.append({
+            "serviceId": service.get('id'),
+            "seriviceStatus": service.get('status'),
+            "serviceClientId": service.get('clientId'),
+            "clientFirstName": client['firstName'],
+            "clientLastName": client['lastName'],
+            "uploadSpeed": float(service.get('uploadSpeed')),
+            "downloadSpeed": float(service.get('downloadSpeed')),
+            "uploadBurstLimit": (float(service.get('uploadSpeed')) * (1 + float(mikrotik_config['burstPercentUp']))),
+            "downloadBurstLimit": (float(service.get('downloadSpeed')) * (1 + float(mikrotik_config['burstPercentDown'])))
+        })
     except:
-        print("Client Id for service doesn't exist")
+        print("Issue with creating the services list")
+
+for item in services:
+    print(item)
 
 # for client in r:
 #     print(client['id'])

@@ -105,10 +105,10 @@ for service in clientServicePlans:
             "serviceClientId": service.get('clientId'),
             "clientFirstName": client['firstName'],
             "clientLastName": client['lastName'],
-            "uploadSpeed": float(service.get('uploadSpeed')),
-            "downloadSpeed": float(service.get('downloadSpeed')),
-            "uploadBurstLimit": (float(service.get('uploadSpeed')) * (1 + float(mikrotik_config['burstPercentUp']))),
-            "downloadBurstLimit": (float(service.get('downloadSpeed')) * (1 + float(mikrotik_config['burstPercentDown']))),
+            "uploadSpeed": site['qos']['uploadSpeed'],
+            "downloadSpeed": site['qos']['downloadSpeed'],
+            "uploadBurstLimit": int((site['qos']['uploadSpeed']) * (1 + float(mikrotik_config['burstPercentUp']))),
+            "downloadBurstLimit": int((site['qos']['downloadSpeed']) * (1 + float(mikrotik_config['burstPercentDown']))),
             "deviceIP": device['ipAddress'].split('/', 1)[0]
         })
     except:

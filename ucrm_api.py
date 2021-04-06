@@ -66,7 +66,21 @@ def getSite(siteId):
     return site
 
 
-# variable declarations
+def disableQueue(queues, name):
+    all_queues = queues.get()
+    for item in all_queues:
+        if name in item['name']:
+            queues.set(id=item['id'], disabled="true")
+
+
+def enableQueue(queues, name):
+    all_queues = queues.get()
+    for item in all_queues:
+        if name in item['name']:
+            queues.set(id=item['id'], disabled="false")
+
+
+    # variable declarations
 services = []
 clientServicePlans = getClientServicePlans()
 allDevices = getAllDevices()
@@ -112,7 +126,7 @@ for service in clientServicePlans:
             "burstThresholdUpload": str(int((site['qos']['uploadSpeed']) * float(mikrotik_config['burstThresholdUpload']))),
             "burstThresholdDownload": str(int((site['qos']['uploadSpeed']) * float(mikrotik_config['burstThresholdDownload']))),
             "queueName": (client['firstName'] + " " + client['lastName'] + " - " + "Service Id: " + str(service.get('id'))),
-            "deviceIP": device['ipAddress'].split('/', 1)[0]
+            "deviceIP": device['ipAddress'].split('/', 1)[0],
         })
     except:
         print("Issue with creating the services list for site id: " +
@@ -145,8 +159,11 @@ try:
     api = router_connection.get_api()
     try:
         list_queues = api.get_resource('/queue/simple')
-        list_queues.get()
+        all_queues = list_queues.get()
         for service in services:
+            for queue in all_queues:
+                if service['status'] == 1 and
+
             list_queues.add(
                 name=service['queueName'], target=service['deviceIP'], max_limit=service['maxLimitUpload'] +
                 "/"+service['maxLimitDownload'], burst_limit=service['burstLimitUpload']+"/"+service['burstLimitDownload'],

@@ -117,6 +117,11 @@ def setQueue(queues, service):
     )
 
 
+def removeQueue(queues, service):
+    remove_queue = getQueue(queues, service['queueName'])
+    queues.remove(id=remove_queue['id'])
+
+
 # variable declarations
 services = []
 clientServicePlans = getClientServicePlans()

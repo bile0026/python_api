@@ -40,7 +40,8 @@ service = {
 mikrotik_config = {
     "router": '192.168.3.20',
     "burstTimeUp": '10',
-    "burstTimeDown": '10'
+    "burstTimeDown": '10',
+    "catch_all_queue": 'CATCH_ALL_QUEUE'
 }
 
 
@@ -93,6 +94,11 @@ def setQueue(queues, service):
         burst_time=mikrotik_config['burstTimeUp'] +
         "s/"+mikrotik_config['burstTimeDown']+"s"
     )
+
+
+def removeQueue(queues, service):
+    remove_queue = getQueue(queues, service['queueName'])
+    queues.remove(id=remove_queue['id'])
 
 
 try:

@@ -12,11 +12,14 @@ no_access = []
 comunication_error = []
 
 router_connection = routeros_api.RouterOsApiPool(
-    '192.168.3.20',
-    username='api',
-    password='api',
-    port=8728,
-    plaintext_login=True
+    mikrotik_config['router'],
+    username=mikrotik_config['username'],
+    password=mikrotik_config['password'],
+    port=int(mikrotik_config['port']),
+    use_ssl=mikrotik_config['use_ssl'],
+    ssl_verify=mikrotik_config['ssl_verify'],
+    ssl_verify_hostname=mikrotik_config['ssl_verify_hostname'],
+    plaintext_login=mikrotik_config['plaintext_login']
 )
 
 queueName = "CATCH_ALL_QUEUE"

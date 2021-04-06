@@ -66,18 +66,21 @@ def getSite(siteId):
     return site
 
 
+# disables a given queue on a router
+
+
 def disableQueue(queues, name):
-    all_queues = queues.get()
-    for item in all_queues:
-        if name in item['name']:
-            queues.set(id=item['id'], disabled="true")
+    print("Disabling queue", name)
+    queues.set(id=getQueueID(queues, name), disabled="true")
+
+# enables a given queue on router
 
 
 def enableQueue(queues, name):
-    all_queues = queues.get()
-    for item in all_queues:
-        if name in item['name']:
-            queues.set(id=item['id'], disabled="false")
+    print("Enabling queue", name)
+    queues.set(id=getQueueID(queues, name), disabled="false")
+
+# returns a queue object
 
 
 def getQueue(queues, name):
@@ -93,6 +96,24 @@ def getQueue(queues, name):
     else:
         return None
 
+# returns the id of the mikrotik queue
+
+
+def getQueueID(queues, name):
+    found_queue_id = ""
+    all_queues = queues.get()
+    for item in all_queues:
+        if name in item['name']:
+            found_queue_id = item['id']
+        else:
+            continue
+    if found_queue_id != "":
+        return found_queue_id
+    else:
+        return None
+
+# build a new queue on the router
+
 
 def addQueue(queues, service):
     queues.add(
@@ -102,6 +123,8 @@ def addQueue(queues, service):
         "/"+service['burstLimitDownload'],
         burst_time=mikrotik_config['burstTimeUp']+"s/"+mikrotik_config['burstTimeDown']+"s", place_before=mikrotik_config['catch_all_queue']
     )
+
+# set all configuration for a given queue
 
 
 def setQueue(queues, service):
@@ -116,10 +139,41 @@ def setQueue(queues, service):
         "s/"+mikrotik_config['burstTimeDown']+"s"
     )
 
+# remove a queue from the router based on the queuename
 
-def removeQueue(queues, service):
-    remove_queue = getQueue(queues, service['queueName'])
-    queues.remove(id=remove_queue['id'])
+
+def removeQueue(queues, queue_id):
+    #remove_queue = getQueue(queues, queue_name)
+    if queue_id:
+        print("Removing ", queue_id)
+        queues.remove(id=queue_id)
+    else:
+        print("Can't remove none queue")
+
+# checks for queues that no longer have services and removes the queues
+
+
+def cleanupQueues(queues, services):
+    all_queues = queues.get()
+    queue_names = list(dict([(d['id'], d['name'])
+                       for d in all_queues]).values())
+    queue_ids = list(dict([(d['id'], d['name'])
+                           for d in all_queues]).keys())
+    service_names = list(dict([(d['serviceId'], d['queueName'])
+                         for d in services]).values())
+    for queue in queue_names:
+        if queue in service_names:
+            print("Service exists, continuing...", queue)
+            continue
+        elif queue == mikrotik_config['catch_all_queue']:
+            print("Catch all queue, continuing...", queue)
+            continue
+        elif queue not in service_names:
+            print("Service does not exist, remove Queue", queue)
+            removeQueue(queues, getQueueID(queues, queue))
+        else:
+            print("Service does not exist, remove Queue", queue)
+            removeQueue(queues, queue)
 
 
 # variable declarations
@@ -157,7 +211,7 @@ for service in clientServicePlans:
     try:
         services.append({
             "serviceId": service.get('id'),
-            "seriviceStatus": service.get('status'),
+            "serviceStatus": service.get('status'),
             "serviceClientId": service.get('clientId'),
             "clientFirstName": client['firstName'],
             "clientLastName": client['lastName'],
@@ -201,17 +255,28 @@ try:
     api = router_connection.get_api()
     try:
         list_queues = api.get_resource('/queue/simple')
-        all_queues = list_queues.get()
+        # all_queues = list_queues.get()
         for service in services:
-            for queue in all_queues:
-                if service['status'] == 1 and
+            if getQueue(list_queues, service['queueName']):
+                setQueue(list_queues, service)
+            else:
+                addQueue(list_queues, service)
 
-            list_queues.add(
-                name=service['queueName'], target=service['deviceIP'], max_limit=service['maxLimitUpload'] +
-                "/"+service['maxLimitDownload'], burst_limit=service['burstLimitUpload']+"/"+service['burstLimitDownload'],
-                burst_threshold=service['burstThresholdUpload'] +
-                "/"+service['burstLimitDownload'],
-                burst_time=mikrotik_config['burstTimeUp']+"s/"+mikrotik_config['burstTimeDown']+"s", place_before=mikrotik_config['catch_all_queue'])
+        # enable/disable queues based on ucrm status
+        for service in services:
+            if service['serviceStatus'] == 1:
+                enableQueue(list_queues, service['queueName'])
+            elif service['serviceStatus'] == 3:
+                disableQueue(list_queues, service['queueName'])
+                print("Service Suspended - Disabling service for Service ID: ",
+                      service['serviceClientId'])
+            else:
+                disableQueue(list_queues, service['queueName'])
+                print("Not active - Disabling service for Service ID: ",
+                      service['serviceClientId'])
+
+        # cleanup queues and remove queues that no longer have a service attached
+        cleanupQueues(list_queues, services)
     except routeros_api.exceptions.RouterOsApiCommunicationError:
         print(mikrotik_config['router'] + '  comms error')
 

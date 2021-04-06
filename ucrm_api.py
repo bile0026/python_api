@@ -231,6 +231,7 @@ for service in clientServicePlans:
 # for item in services:
 #     print(item)
 
+# FIXME #1
 # router_connection = routeros_api.RouterOsApiPool(
 #     str(mikrotik_config['router']),
 #     username=str(mikrotik_config['username']),

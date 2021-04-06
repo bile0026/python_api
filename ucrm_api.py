@@ -80,7 +80,44 @@ def enableQueue(queues, name):
             queues.set(id=item['id'], disabled="false")
 
 
-    # variable declarations
+def getQueue(queues, name):
+    found_queue = {}
+    all_queues = queues.get()
+    for item in all_queues:
+        if name in item['name']:
+            found_queue = item
+        else:
+            continue
+    if found_queue:
+        return found_queue
+    else:
+        return None
+
+
+def addQueue(queues, service):
+    queues.add(
+        name=service['queueName'], target=service['deviceIP'], max_limit=service['maxLimitUpload'] +
+        "/"+service['maxLimitDownload'], burst_limit=service['burstLimitUpload']+"/"+service['burstLimitDownload'],
+        burst_threshold=service['burstThresholdUpload'] +
+        "/"+service['burstLimitDownload'],
+        burst_time=mikrotik_config['burstTimeUp']+"s/"+mikrotik_config['burstTimeDown']+"s", place_before=mikrotik_config['catch_all_queue']
+    )
+
+
+def setQueue(queues, service):
+    # queues = queues.get()
+    set_queue = getQueue(queues, service['queueName'])
+    queues.set(
+        id=set_queue['id'], name=service['queueName'], target=service['deviceIP'], max_limit=service['maxLimitUpload'] +
+        "/"+service['maxLimitDownload'], burst_limit=service['burstLimitUpload']+"/"+service['burstLimitDownload'],
+        burst_threshold=service['burstThresholdUpload'] +
+        "/"+service['burstLimitDownload'],
+        burst_time=mikrotik_config['burstTimeUp'] +
+        "s/"+mikrotik_config['burstTimeDown']+"s"
+    )
+
+
+# variable declarations
 services = []
 clientServicePlans = getClientServicePlans()
 allDevices = getAllDevices()

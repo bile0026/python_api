@@ -1,8 +1,8 @@
 import requests
 import json
 from configparser import ConfigParser
-
 from requests.api import head, request
+import routeros_api
 
 config = ConfigParser()
 config.read("ucrm_api.ini")
@@ -105,15 +105,58 @@ for service in clientServicePlans:
             "serviceClientId": service.get('clientId'),
             "clientFirstName": client['firstName'],
             "clientLastName": client['lastName'],
-            "uploadSpeed": site['qos']['uploadSpeed'],
-            "downloadSpeed": site['qos']['downloadSpeed'],
-            "uploadBurstLimit": int((site['qos']['uploadSpeed']) * (1 + float(mikrotik_config['burstPercentUp']))),
-            "downloadBurstLimit": int((site['qos']['downloadSpeed']) * (1 + float(mikrotik_config['burstPercentDown']))),
+            "maxLimitUpload": str(site['qos']['uploadSpeed']),
+            "maxLimitDownload": str(site['qos']['downloadSpeed']),
+            "burstLimitUpload": str(int((site['qos']['uploadSpeed']) * (1 + float(mikrotik_config['burstLimitUpload'])))),
+            "burstLimitDownload": str(int((site['qos']['downloadSpeed']) * (1 + float(mikrotik_config['burstLimitDownload'])))),
+            "burstThresholdUpload": str(int((site['qos']['uploadSpeed']) * float(mikrotik_config['burstThresholdUpload']))),
+            "burstThresholdDownload": str(int((site['qos']['uploadSpeed']) * float(mikrotik_config['burstThresholdDownload']))),
+            "queueName": (client['firstName'] + " " + client['lastName'] + " - " + "Service Id: " + str(service.get('id'))),
             "deviceIP": device['ipAddress'].split('/', 1)[0]
         })
     except:
         print("Issue with creating the services list for site id: " +
               str(service.get('id')))
 
-for item in services:
-    print(item)
+# for item in services:
+#     print(item)
+
+# router_connection = routeros_api.RouterOsApiPool(
+#     str(mikrotik_config['router']),
+#     username=str(mikrotik_config['username']),
+#     password=str(mikrotik_config['password']),
+#     port=int(mikrotik_config['port']),
+#     use_ssl=str(mikrotik_config['use_ssl']),
+#     ssl_verify=str(mikrotik_config['ssl_verify']),
+#     ssl_verify_hostname=str(mikrotik_config['ssl_verify_hostname']),
+#     plaintext_login=str(mikrotik_config['plaintext_login'])
+# )
+
+router_connection = routeros_api.RouterOsApiPool(
+    '192.168.3.20',
+    username='api',
+    password='api',
+    port=8728,
+    plaintext_login=True
+)
+
+# connect to the router and attempt to create the queues
+try:
+    api = router_connection.get_api()
+    try:
+        list_queues = api.get_resource('/queue/simple')
+        list_queues.get()
+        for service in services:
+            list_queues.add(
+                name=service['queueName'], target=service['deviceIP'], max_limit=service['maxLimitUpload'] +
+                "/"+service['maxLimitDownload'], burst_limit=service['burstLimitUpload']+"/"+service['burstLimitDownload'],
+                burst_threshold=service['burstThresholdUpload'] +
+                "/"+service['burstLimitDownload'],
+                burst_time=mikrotik_config['burstTimeUp']+"s/"+mikrotik_config['burstTimeDown']+"s", place_before=mikrotik_config['catch_all_queue'])
+    except routeros_api.exceptions.RouterOsApiCommunicationError:
+        print(mikrotik_config['router'] + '  comms error')
+
+    router_connection.disconnect()
+
+except routeros_api.exceptions.RouterOsApiConnectionError:
+    print(mikrotik_config['router'] + '  NOT done')

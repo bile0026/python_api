@@ -4,6 +4,9 @@ various python scripts using the requests module
 # UCRM_API
 Create Simple Queues on a MikroTik Router from UNMS/UCRM information.
 
+Current Issues:
+1. SSL not yet working. Testing on 6.47.9. Haven't found a working combo of SSL options yet.
+
 * Create an .ini file in the same directory as the `ucrm_api.py` script with this format.
 ```
 [UCRM]
